@@ -1,0 +1,85 @@
+#!/bin/sh
+
+SSHKEY="$HOME/.ssh/id_rsa.pub"
+SCRIPT="startup.sh"
+
+OS=140
+MAINNETPLAN=95
+TESTNETPLAN=94
+
+REGION=$1
+
+echodo() {
+	echo "$@"
+	# shellcheck disable=SC2048
+	$*
+}
+
+if [ -z "$REGION" ]; then
+	echo "Usage: $0 (region ID)"
+	exit 1
+fi
+
+if [ -z "$VULTR_API_KEY" ]; then
+	echo 'VULTR_API_KEY not set.'
+	exit 1
+fi
+
+if [ ! -r "$SSHKEY" ]; then
+	echo "$SSHKEY not found."
+	exit 1
+fi
+
+getkeyid() {
+	# Not sure how they generate this
+	vultr sshkeys | grep vultrxt | awk '{print $1}'
+}
+
+VULTRSSHKEYID=$(getkeyid)
+
+# Probably no key
+if [ -z "$VULTRSSHKEYID" ]; then
+	echo 'Notice: Uploading SSH key to vultr'
+	vultr sshkey create -n vultrxt -f "$SSHKEY"
+	sleep 1
+	VULTRSSHKEYID=$(getkeyid)
+fi
+
+# Check if something went wrong
+if [ -z "$VULTRSSHKEYID" ]; then
+	echo 'SSH key not found on vultr.'
+	exit 1
+fi
+
+getscriptid() {
+	vultr scripts | grep vultrxt | awk '{print $1}'
+}
+
+VULTRSCRIPTID=$(getscriptid)
+
+# Probably no script
+if [ -z "$VULTRSCRIPTID" ]; then
+	echo 'Notice: Uploading SSH key to vultr'
+	vultr script create -n vultrxt -f "$SCRIPT"
+	sleep 1
+	VULTRSCRIPTID=$(getscriptid)
+fi
+
+# Check if something went wrong
+if [ -z "$VULTRSCRIPTID" ]; then
+	echo 'Startup script not found on vultr.'
+	exit 1
+fi
+
+vultrcreate() {
+	NAME=$1
+	PLAN=$2
+	echodo vultr server create -n "$NAME" -r "$REGION" -p "$PLAN" -o "$OS" \
+	-k "$VULTRSSHKEYID" -s "$VULTRSCRIPTID" --ipv6=true
+}
+
+vultrcreate vultrxt-mainnet $MAINNETPLAN
+vultrcreate vultrxt-testnet $TESTNETPLAN
+
+echo 'Finished, servers may take some moments to come online.'
+vultr servers | grep 'vutrxt-....net'
