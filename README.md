@@ -23,3 +23,7 @@ $ export GOPATH=$HOME/golang
 5. `$ go get github.com/JamesClonk/vultr`
 6. `$ vultr regions` (Note the region number you want)
 7. `$ ./vultrxt (region number)`
+
+# License
+
+Public domain / Unlicense
