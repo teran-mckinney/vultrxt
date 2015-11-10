@@ -1,37 +1,55 @@
 #!/bin/sh
 
+progress() {
+	echo "vultrxt: $*" > /dev/console
+	echo "vultrxt: $*"
+}
+
 # This runs at the top of cloud-init. We don't even have SSHD running without
 # this.
 
 export ASSUME_ALWAYS_YES=yes
 
-# Just have a gig free without this.
-service growfs onestart
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 # pkg isn't installed by default on vultr, but this will bootstrap it
 # with the above option of ASSUME_ALWAYS_YES=yes
+
+progress 'Starting pkg upgrade'
 pkg upgrade
 
+progress 'Starting pkg install'
+pkg upgrade
 pkg install ca_root_nss autotools pkgconf gmake boost-libs openssl db48 git micro_httpd micro_inetd #FIXME TODO: Remove git
 chmod 700 /root
 mkdir /root/.bitcoin
 echo 'debug=net
 maxoutbound=32
 logtimemicros=1
-rpcuser=*
-rpcpassword=*' > /root/.bitcoin/bitcoin.conf
+rpcuser=vultrxt
+rpcpassword=vultrxtpassword' > /root/.bitcoin/bitcoin.conf
+# ^ If the user and password are the same, it will fail.
 
-mkdir bitcoinxt; cd bitcoinxt
+mkdir /root/bitcoinxt
+
+# tmpfs for speed and because / is too small otherwise.
+# growfs seems to have problems, not sure why.
+mount -t tmpfs tmpfs /root/bitcoinxt
+cd /root/bitcoinxt
 #FIXME This seems to have a 302 loop right now.
 #fetch -qo - https://github.com/bitcoinxt/bitcoinxt/archive/$TAG.tar.gz | tar xzf -
 
+progress 'Starting git clone'
 # Using jtoomin's fortestnet branch.
- git clone --depth 1 https://github.com/jtoomim/bitcoinxt.git -b fortestnet
+git clone --depth 1 https://github.com/jtoomim/bitcoinxt.git -b fortestnet
 cd bitcoinxt
 ./autogen.sh
 ./configure --with-gui=no --without-miniupnpc --disable-wallet
-gmake
+progress 'About to compile'
+gmake -j 2
 gmake install
+cd /
+umount /root/bitcoinxt
 
 fetch -q \
 https://raw.githubusercontent.com/teran-mckinney/bitnoder/master/fs/etc/rc.local \
@@ -60,7 +78,6 @@ echo 'TESTNET=1' > /usr/local/etc/bitnoder.conf
 #swapon -a
 
 echo 'ntpd_enable="YES"' >> /etc/rc.conf
-service ntpd start
 
 chmod 500 /etc/rc.local
 chmod 500 /usr/local/bin/honeybadgermoneystats

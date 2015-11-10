@@ -1,7 +1,7 @@
 #vultrXT
 ###BitcoinXT nodes on vultr
 
-Creates a ~~4GiB mainnet and a 2GiB~~ 4GiB testnet Bitcoin XT instances in the specified region.
+Creates a ~~4GiB mainnet and a 2GiB~~ 4GiB testnet Bitcoin XT instance~~s~~ in the specified region.
 
 Active on IPv4 and IPv6. Listening on HTTP, serving a basic status page.
 

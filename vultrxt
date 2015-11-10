@@ -61,7 +61,7 @@ VULTRSCRIPTID=$(getscriptid)
 
 # Probably no script
 if [ -z "$VULTRSCRIPTID" ]; then
-	echo 'Notice: Uploading SSH key to vultr'
+	echo 'Notice: Uploading startup script to vultr'
 	vultr script create -n vultrxt -f "$SCRIPT"
 	sleep 1
 	VULTRSCRIPTID=$(getscriptid)
