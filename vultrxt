@@ -4,8 +4,10 @@ SSHKEY="$HOME/.ssh/id_rsa.pub"
 SCRIPT="startup.sh"
 
 OS=140
-MAINNETPLAN=95
-TESTNETPLAN=94
+#MAINNETPLAN=95
+#TESTNETPLAN=94
+# Go big, or go home!
+TESTNETPLAN=95
 
 REGION=$1
 
@@ -78,7 +80,7 @@ vultrcreate() {
 	-k "$VULTRSSHKEYID" -s "$VULTRSCRIPTID" --ipv6=true
 }
 
-vultrcreate vultrxt-mainnet $MAINNETPLAN
+#vultrcreate vultrxt-mainnet $MAINNETPLAN
 vultrcreate vultrxt-testnet $TESTNETPLAN
 
 echo 'Finished, servers may take some moments to come online.'
